@@ -19,11 +19,7 @@ DEFINE_FILTER(f_nmea0183_device);
 ///////////////////////////////////////////////////////////// f_nmea0183_device
 bool f_nmea0183_device::open_com()
 {
-#ifdef _WIN32 // for windows
-  m_hcom = open_serial(m_port, m_cbr);
-#else // for Linux 
   m_hcom = open_serial(m_fname, m_cbr);
-#endif	
   if(m_hcom == NULL_SERIAL){
     return false;
   }
@@ -363,21 +359,14 @@ void f_nmea0183_device::destroy_run(){
     m_file.close();
     break;
   case COM:
-#ifdef _WIN32
-    CloseHandle(m_hcom);
-    m_hcom = NULL;
-#else
     ::close(m_hcom);
     m_hcom = 0;
-#endif
     break;
   case UDP:
-#ifdef _WIN32
-    closesocket(m_sock);
-#else
     ::close(m_sock);
-#endif
+    break;
   }
+  
   if(m_flog.is_open())
     m_flog.close();
 }
