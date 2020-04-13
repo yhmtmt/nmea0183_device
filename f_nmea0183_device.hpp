@@ -29,6 +29,10 @@ protected:
   ch_nmea * m_chout;
   ch_nmea * m_chin;
 
+  
+  ch_nmea_data * m_data_out;
+  c_nmea_dec m_decoder;
+  
   bool m_blog;
   bool m_verb;
   char m_fname_log[1024];
@@ -105,7 +109,10 @@ protected:
   }
 
 public:
-  f_nmea0183_device(const char * name): f_base(name), m_chin(NULL), m_chout(NULL), m_verb(false), m_blog(false),
+  f_nmea0183_device(const char * name): f_base(name),
+					m_chin(NULL), m_chout(NULL),
+					m_data_out(nullptr),
+					m_verb(false), m_blog(false),
 			     m_hcom(NULL_SERIAL), m_nmea_src(NONE){
     m_fname[0] = '\0';
 
@@ -122,6 +129,9 @@ public:
     register_fpar("verb", &m_verb, "For debug.");
     register_fpar("log", &m_blog, "Log enable (y or n)");
     register_fpar("filter", m_filter, 6, "Sentence filter. 5 characters are to be specified. * can be used as wild card.");
+    register_fpar("nmea_in", (ch_base**)&m_chin, typeid(ch_nmea).name(), "NMEA input channel.");
+    register_fpar("nmea_out", (ch_base**)&m_chout, typeid(ch_nmea).name(), "NMEA output channel.");
+    register_fpar("data_out", (ch_base**)&m_data_out, typeid(ch_nmea_data).name(), "Decoded data output channel.");
   }
 
   ~f_nmea0183_device(){

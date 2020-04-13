@@ -117,7 +117,6 @@ bool f_nmea0183_device::rcv_file()
       break;
     }
 
-    //cout << &m_buf[31] << endl;
     if(m_chout){
       int len = (int) strlen(&m_buf[31]);
       if(len >= 84){
@@ -128,6 +127,11 @@ bool f_nmea0183_device::rcv_file()
       if(is_filtered(&m_buf[31])){
 	if(!m_chout->push(&m_buf[31]))
 	  cerr << "Buffer overflow in ch_nmea " << m_chout->get_name() << endl;
+	if(m_data_out){
+	  const c_nmea_dat * dat = m_decoder.decode(&m_buf[31], rec_time);
+	  if(dat)
+	    m_data_out->push(dat->get_buffer_pointer(), dat->get_buffer_size());	  
+	}
       }
     }
 
@@ -214,6 +218,12 @@ void f_nmea0183_device::extract_nmea_from_buffer()
     // Then the string remained in the buffer is shiftted to the head.
     if(m_nmea_tail == -1){
       if(is_filtered(m_nmea)){
+	if(m_data_out){
+	  const c_nmea_dat * dat = m_decoder.decode(m_nmea, get_time());
+	  if(dat)
+	    m_data_out->push(dat->get_buffer_pointer(), dat->get_buffer_size());
+	}
+	
 	if(!m_chout->push(m_nmea)){
 	  cerr << "Buffer overflow in ch_nmea " << m_chout->get_name() << endl;
 	}
@@ -306,20 +316,6 @@ int f_nmea0183_device::send_nmea()
 
 bool f_nmea0183_device::init_run()
 {
-
-  for(int ich = 0;ich < f_base::m_chout.size(); ich++){
-    ch_nmea * pch = dynamic_cast<ch_nmea*>(f_base::m_chout[ich]);
-    if(pch != NULL){
-      m_chout = pch;
-    }
-  }
-
-  for(int ich = 0; ich < f_base::m_chin.size(); ich++){
-    ch_nmea * pch = dynamic_cast<ch_nmea*>(f_base::m_chin[ich]);
-    if(pch != NULL)
-      m_chin = pch;
-  }
-
   dec_type_str();
   switch(m_nmea_src){
   case NONE:
