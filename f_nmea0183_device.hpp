@@ -28,10 +28,11 @@ class f_nmea0183_device: public f_base
 protected:
   ch_nmea * m_chout;
   ch_nmea * m_chin;
-
   
   ch_nmea_data * m_data_out;
   c_nmea_dec m_decoder;
+  char m_fname_decoder_config[1024];
+  bool load_decoder_config();
   
   bool m_blog;
   bool m_verb;
@@ -115,11 +116,13 @@ public:
 					m_verb(false), m_blog(false),
 			     m_hcom(NULL_SERIAL), m_nmea_src(NONE){
     m_fname[0] = '\0';
+    m_fname_decoder_config[0] = '\0';
 
     m_filter[0] = m_filter[1] = m_filter[2] = m_filter[3] = m_filter[4] = '*';
     m_filter[5] = '\0';
 
     register_fpar("fnmea", m_fname, 1024, "File path of NMEA source file.");
+    
     register_fpar("src_host", m_host, 1024, "IP address of NMEA source (if not specified ADDR_ANY is used).");
     register_fpar("dst_host", m_dst_host, 256, "IP address of NMEA destination (if not specified UDP output is not turned on."); 
     register_fpar("src", m_src_type_str, 128, "Source type. FILE or UDP or COM is allowed.");
@@ -132,6 +135,8 @@ public:
     register_fpar("nmea_in", (ch_base**)&m_chin, typeid(ch_nmea).name(), "NMEA input channel.");
     register_fpar("nmea_out", (ch_base**)&m_chout, typeid(ch_nmea).name(), "NMEA output channel.");
     register_fpar("data_out", (ch_base**)&m_data_out, typeid(ch_nmea_data).name(), "Decoded data output channel.");
+    register_fpar("fdecoder_config", m_fname_decoder_config, "File path to the NMEA0183 decoder configuration file.");
+    
   }
 
   ~f_nmea0183_device(){

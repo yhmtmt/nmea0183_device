@@ -1,4 +1,4 @@
-// Copyright(c) 2012-2019 Yohei Matsumoto, Tokyo University of Marine
+// Copyright(c) 2012-2020 Yohei Matsumoto, Tokyo University of Marine
 // Science and Technology, All right reserved. 
 
 // f_nmea0183_device.cpp is free software: you can redistribute it and/or modify
@@ -14,9 +14,86 @@
 // You should have received a copy of the GNU General Public License
 // along with f_nmea0183_device.cpp.  If not, see <http://www.gnu.org/licenses/>. 
 #include "f_nmea0183_device.hpp"
+#include "decoder_config.pb.h"
+#include <google/protobuf/util/json_util.h>
+
 DEFINE_FILTER(f_nmea0183_device);
 
 ///////////////////////////////////////////////////////////// f_nmea0183_device
+
+bool f_nmea0183_device::load_decoder_config()
+{
+  if(!m_data_out)
+    return false;
+
+  ifstream file(m_fname_decoder_config);
+  if(!file.is_open()){
+    spdlog::error("[{}] load_decoder_config() failed to open file {}.",
+		  get_name(), m_fname_decoder_config);
+    return false;    
+  }
+
+  NMEA0183Device::DecoderConfig conf;
+  string str_fdecoder_config(m_fname_decoder_config);
+  if(str_fdecoder_config.substr(str_fdecoder_config.find_last_of(".") + 1)
+     == "json"){
+    // for json file.
+    stringstream strstream;
+    strstream << file.rdbuf();
+    string json_string(strstream.str());
+    google::protobuf::util::Status st =
+      google::protobuf::util::JsonStringToMessage(json_string, &conf);
+    if(!st.ok()){
+      spdlog::error("[{}] Failed to parse {}.",
+		    get_name(), m_fname_decoder_config);
+      return false;
+    }else{
+      spdlog::info("[{}] {} successfully parsed.",
+		   get_name(), m_fname_decoder_config);
+    }
+  }else{ // for binary file
+    if(!conf.ParseFromIstream(&file)){
+      spdlog::error("[{}] Failed to parse {}.", get_name(),
+		    m_fname_decoder_config);
+      return false;
+    }
+  }
+
+  for (int i = 0; i < conf.sentence_id_size(); i++){
+    const char * sentence_id = conf.sentence_id(i).c_str();
+    if(!m_decoder.add_nmea0183_decoder(sentence_id)){
+      spdlog::error("[{}] Failed to add sentence {} to decoder.",
+		    get_name(), sentence_id);
+    }    
+  }
+
+  for(int i = 0; i < conf.psat_sentence_id_size(); i++){
+    const char * sentence_id = conf.psat_sentence_id(i).c_str();
+    if(!m_decoder.add_psat_decoder(sentence_id)){
+      spdlog::error("[{}] Failed to add PSAT sentence {} to decoder.",
+		    get_name(), sentence_id);      
+    }
+  }
+
+  for (int i = 0; i < conf.vdm_message_id_size(); i++){
+    int message_id = conf.vdm_message_id(i);
+    if(!m_decoder.add_nmea0183_vdm_decoder(message_id)){
+      spdlog::error("[{}] Failed to add VDM message {} to decoder.",
+		    get_name(), message_id);
+    }
+  }
+
+  for (int i = 0; i < conf.vdo_message_id_size(); i++){
+    int message_id = conf.vdo_message_id(i);
+    if(!m_decoder.add_nmea0183_vdo_decoder(message_id)){
+      spdlog::error("[{}] Failed to add VDO message {} to decoder.",
+		    get_name(), message_id);
+    }
+  }
+
+  return true;
+}
+
 bool f_nmea0183_device::open_com()
 {
   m_hcom = open_serial(m_fname, m_cbr);
