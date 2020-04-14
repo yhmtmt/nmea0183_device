@@ -420,6 +420,9 @@ bool f_nmea0183_device::init_run()
     }
   }
 
+  if(!load_decoder_config()){
+    spdlog::error("[{}] Decoder configuration is not completed.", get_name());    
+  }
   m_buf_head = 0;
   m_buf_tail = 0;
   m_nmea_tail = 0;

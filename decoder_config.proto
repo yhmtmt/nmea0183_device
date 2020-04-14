@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package NMEA0183Device;
+
+
+
+message DecoderConfig{
+	repeated string sentence_id = 1;
+	repeated string psat_sentence_id = 2;
+	repeated uint32 vdm_message_id = 3;
+	repeated uint32 vdo_message_id = 4;
+}
+	
