@@ -15,7 +15,7 @@
 // along with f_nmea0183_device.cpp.  If not, see <http://www.gnu.org/licenses/>. 
 #include "f_nmea0183_device.hpp"
 #include "decoder_config.pb.h"
-#include <google/protobuf/util/json_util.h>
+#include "aws_proto.hpp"
 
 DEFINE_FILTER(f_nmea0183_device);
 
@@ -26,37 +26,12 @@ bool f_nmea0183_device::load_decoder_config()
   if(!m_data_out)
     return false;
 
-  ifstream file(m_fname_decoder_config);
-  if(!file.is_open()){
+  NMEA0183Device::DecoderConfig conf; 
+
+  if(!load_proto_object(m_fname_decoder_config, conf)){
     spdlog::error("[{}] load_decoder_config() failed to open file {}.",
 		  get_name(), m_fname_decoder_config);
     return false;    
-  }
-
-  NMEA0183Device::DecoderConfig conf;
-  string str_fdecoder_config(m_fname_decoder_config);
-  if(str_fdecoder_config.substr(str_fdecoder_config.find_last_of(".") + 1)
-     == "json"){
-    // for json file.
-    stringstream strstream;
-    strstream << file.rdbuf();
-    string json_string(strstream.str());
-    google::protobuf::util::Status st =
-      google::protobuf::util::JsonStringToMessage(json_string, &conf);
-    if(!st.ok()){
-      spdlog::error("[{}] Failed to parse {}.",
-		    get_name(), m_fname_decoder_config);
-      return false;
-    }else{
-      spdlog::info("[{}] {} successfully parsed.",
-		   get_name(), m_fname_decoder_config);
-    }
-  }else{ // for binary file
-    if(!conf.ParseFromIstream(&file)){
-      spdlog::error("[{}] Failed to parse {}.", get_name(),
-		    m_fname_decoder_config);
-      return false;
-    }
   }
 
   for (int i = 0; i < conf.sentence_id_size(); i++){
