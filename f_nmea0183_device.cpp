@@ -26,9 +26,11 @@ bool f_nmea0183_device::load_decoder_config()
   if(!m_data_out)
     return false;
 
+  char filepath[2048];
+  snprintf(filepath, 2048, "%s/%s.json", f_base::get_data_path().c_str(), get_name());
+  
   NMEA0183Device::DecoderConfig conf; 
-
-  if(!load_proto_object(m_fname_decoder_config, conf)){
+  if(!load_proto_object(filepath, conf)){
     spdlog::error("[{}] load_decoder_config() failed to open file {}.",
 		  get_name(), m_fname_decoder_config);
     return false;    
@@ -285,7 +287,8 @@ void f_nmea0183_device::extract_nmea_from_buffer()
 	if(m_flog.is_open())
 	  m_flog << get_time_str() << m_nmea << endl;
 	else{
-	  sprintf(m_fname_log, "%s_%lld.nmea", m_name, get_time());
+	  sprintf(m_fname_log, "%s/%s_%lld.nmea",
+		  f_base::get_data_path().c_str(), m_name, get_time());
 	  m_flog.open(m_fname_log);
 	}
       }
@@ -387,7 +390,8 @@ bool f_nmea0183_device::init_run()
   }
   if(m_blog){
     time_t t = time(NULL);
-    sprintf(m_fname_log, "%s_%lld.nmea", m_name, (long long int)t);
+    sprintf(m_fname_log, "%s/%s_%lld.nmea",
+	    f_base::get_data_path().c_str(), m_name, (long long int)t);
     m_flog.open(m_fname_log);
     if(!m_flog.is_open()){
       destroy_run();
