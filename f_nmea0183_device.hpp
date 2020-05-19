@@ -1,5 +1,4 @@
-// Copyright(c) 2012 Yohei Matsumoto, Tokyo University of Marine
-// Science and Technology, All right reserved. 
+// Copyright(c) 2012-2020 Yohei Matsumoto, All right reserved. 
 
 // f_nmea0183_device.hpp is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,6 +28,9 @@ protected:
   ch_nmea * m_chout;
   ch_nmea * m_chin;
   
+  ch_nmea * m_ch_to_dev;
+  ch_nmea * m_ch_from_dev;
+  
   ch_nmea_data * m_data_out;
   c_nmea_dec m_decoder;
   char m_fname_decoder_config[1024];
@@ -48,7 +50,7 @@ protected:
   char m_nmea[84];
   int m_nmea_tail;
   char m_src_type_str[8];
-  enum e_nmea_src{NONE, FILE, COM, UDP} m_nmea_src;
+  enum e_nmea_src{NONE, FILE, COM, UDP, CHAN} m_nmea_src;
   union{
     char m_fname[1024];
     char m_host[1024];
@@ -78,6 +80,8 @@ protected:
     }
     else if(strcmp("FILE", m_src_type_str) == 0){
       m_nmea_src = FILE;
+    }else if(strcmp("CHAN", m_src_type_str) == 0){
+      m_nmea_src = CHAN;
     }else{
       m_nmea_src = NONE;
     }
@@ -112,6 +116,8 @@ protected:
 public:
   f_nmea0183_device(const char * name): f_base(name),
 					m_chin(NULL), m_chout(NULL),
+					m_ch_to_dev(nullptr),
+					m_ch_from_dev(nullptr),
 					m_data_out(nullptr),
 					m_verb(false), m_blog(false),
 			     m_hcom(NULL_SERIAL), m_nmea_src(NONE){
@@ -132,10 +138,18 @@ public:
     register_fpar("verb", &m_verb, "For debug.");
     register_fpar("log", &m_blog, "Log enable (y or n)");
     register_fpar("filter", m_filter, 6, "Sentence filter. 5 characters are to be specified. * can be used as wild card.");
-    register_fpar("nmea_in", (ch_base**)&m_chin, typeid(ch_nmea).name(), "NMEA input channel.");
-    register_fpar("nmea_out", (ch_base**)&m_chout, typeid(ch_nmea).name(), "NMEA output channel.");
-    register_fpar("data_out", (ch_base**)&m_data_out, typeid(ch_nmea_data).name(), "Decoded data output channel.");
-    register_fpar("fdecoder_config", m_fname_decoder_config, "File path to the NMEA0183 decoder configuration file.");
+    register_fpar("nmea_in", (ch_base**)&m_chin,
+		  typeid(ch_nmea).name(), "NMEA input channel.");
+    register_fpar("nmea_out", (ch_base**)&m_chout,
+		  typeid(ch_nmea).name(), "NMEA output channel.");
+    register_fpar("to_dev", (ch_base**)&m_ch_to_dev,
+		  typeid(ch_nmea).name(), "NMEA bypass channel to device.");
+    register_fpar("from_dev", (ch_base**)&m_ch_from_dev,
+		  typeid(ch_nmea).name(), "NMEA bypass channel from device.");
+    register_fpar("data_out", (ch_base**)&m_data_out,
+		  typeid(ch_nmea_data).name(), "Decoded data output channel.");
+    register_fpar("fdecoder_config", m_fname_decoder_config,
+		  "File path to the NMEA0183 decoder configuration file.");
     
   }
 

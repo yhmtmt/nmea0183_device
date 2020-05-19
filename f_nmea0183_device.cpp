@@ -327,6 +327,31 @@ bool f_nmea0183_device::proc(){
     if(!rcv_udp())
       return false;
     break;
+  case CHAN:      
+    if(m_ch_from_dev && m_ch_from_dev->pop(m_nmea) && is_filtered(m_nmea)){
+      if(m_data_out){
+	const c_nmea_dat * dat = m_decoder.decode(m_nmea, get_time());
+	if(dat)
+	  m_data_out->push(dat->get_buffer_pointer(), dat->get_buffer_size());
+      }
+      
+      if(!m_chout->push(m_nmea)){
+	cerr << "Buffer overflow in ch_nmea " << m_chout->get_name() << endl;
+      }
+    }    
+    if(m_blog){
+      if(m_flog.is_open())
+	m_flog << get_time_str() << m_nmea << endl;
+      else{
+	sprintf(m_fname_log, "%s/%s_%lld.nmea",
+		f_base::get_data_path().c_str(), m_name, get_time());
+	m_flog.open(m_fname_log);
+      }
+    }    
+    if(m_verb){
+      cout << m_name << " > " << m_nmea << endl;
+    }
+    break;
   }
   return true;
 }
@@ -349,6 +374,7 @@ int f_nmea0183_device::send_nmea()
     if(m_blog){
       m_flog << get_time_str() << m_buf_send << endl;
     }
+    
     if(m_verb){
       cout << m_name << " > " << m_buf_send << endl;
     }
@@ -364,6 +390,10 @@ int f_nmea0183_device::send_nmea()
     case UDP:
       len = send(m_sock_out, m_buf_send, (int) sizeof(m_buf_send), 0);
       break;
+    case CHAN:
+      if(m_ch_to_dev){
+	m_ch_to_dev->push(m_buf_send);
+      }
     }
   }
   return len;
@@ -387,7 +417,14 @@ bool f_nmea0183_device::init_run()
     if(!open_udp())
       return false;
     break;
+  case CHAN:
+    if(m_ch_to_dev == nullptr || m_ch_from_dev == nullptr){
+      spdlog::error("[{}] Device CHAN mode requires ch_to_dev and ch_from_dev connected.", get_name());
+      return false;
+    }
+    break;      
   }
+  
   if(m_blog){
     time_t t = time(NULL);
     sprintf(m_fname_log, "%s/%s_%lld.nmea",
