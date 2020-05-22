@@ -29,7 +29,8 @@ bool f_nmea0183_device::load_decoder_config()
   char filepath[2048];
   snprintf(filepath, 2048, "%s/%s.json", f_base::get_data_path().c_str(), get_name());
   
-  NMEA0183Device::DecoderConfig conf; 
+  NMEA0183Device::DecoderConfig conf;
+  
   if(!load_proto_object(filepath, conf)){
     spdlog::error("[{}] load_decoder_config() failed to open file {}.",
 		  get_name(), m_fname_decoder_config);
@@ -335,7 +336,7 @@ bool f_nmea0183_device::proc(){
 	  m_data_out->push(dat->get_buffer_pointer(), dat->get_buffer_size());
       }
       
-      if(!m_chout->push(m_nmea)){
+      if(m_chout && !m_chout->push(m_nmea)){
 	cerr << "Buffer overflow in ch_nmea " << m_chout->get_name() << endl;
       }
     }    
@@ -363,7 +364,7 @@ int f_nmea0183_device::send_nmea()
   }
 
   int len = 0;
-  if(m_chin->pop(m_buf_send)){
+  if(m_chin && m_chin->pop(m_buf_send)){
     int _len = (int) strlen(m_buf_send);
     if(m_buf_send[_len-2] != 0x0D && m_buf_send[_len-1] != 0x0A){
       m_buf_send[_len] = 0x0D;
@@ -437,7 +438,7 @@ bool f_nmea0183_device::init_run()
   }
 
   if(!load_decoder_config()){
-    spdlog::error("[{}] Decoder configuration is not completed.", get_name());    
+    spdlog::error("[{}] Decoder configuration is not completed.", get_name());   
   }
   m_buf_head = 0;
   m_buf_tail = 0;
