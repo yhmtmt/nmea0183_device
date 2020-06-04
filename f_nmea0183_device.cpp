@@ -76,6 +76,7 @@ bool f_nmea0183_device::open_com()
 {
   m_hcom = open_serial(m_fname, m_cbr);
   if(m_hcom == NULL_SERIAL){
+    spdlog::error("[{}] Failed to open serial port {}.", get_name(), m_fname);
     return false;
   }
   return true;
