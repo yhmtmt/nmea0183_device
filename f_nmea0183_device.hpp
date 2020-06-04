@@ -131,7 +131,7 @@ public:
     
     register_fpar("src_host", m_host, 1024, "IP address of NMEA source (if not specified ADDR_ANY is used).");
     register_fpar("dst_host", m_dst_host, 256, "IP address of NMEA destination (if not specified UDP output is not turned on."); 
-    register_fpar("src", m_src_type_str, 128, "Source type. FILE or UDP or COM is allowed.");
+    register_fpar("src", m_src_type_str, 8, "Source type. FILE or UDP or COM is allowed.");
     register_fpar("com", &m_port, "Number of NMEA source COM port.");
     register_fpar("bps", &m_cbr, "Baud rate of NMEA source COM port.");
     register_fpar("port", &m_port, "Port number of NMEA source UDP.");
