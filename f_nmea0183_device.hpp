@@ -148,8 +148,6 @@ public:
 		  typeid(ch_nmea).name(), "NMEA bypass channel from device.");
     register_fpar("data_out", (ch_base**)&m_data_out,
 		  typeid(ch_nmea_data).name(), "Decoded data output channel.");
-    register_fpar("fdecoder_config", m_fname_decoder_config,
-		  "File path to the NMEA0183 decoder configuration file.");
     
   }
 

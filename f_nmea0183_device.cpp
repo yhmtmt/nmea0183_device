@@ -1,5 +1,4 @@
-// Copyright(c) 2012-2020 Yohei Matsumoto, Tokyo University of Marine
-// Science and Technology, All right reserved. 
+// Copyright(c) 2012-2020 Yohei Matsumoto, All right reserved. 
 
 // f_nmea0183_device.cpp is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,7 +32,7 @@ bool f_nmea0183_device::load_decoder_config()
   
   if(!load_proto_object(filepath, conf)){
     spdlog::error("[{}] load_decoder_config() failed to open file {}.",
-		  get_name(), m_fname_decoder_config);
+		  get_name(), filepath);
     return false;    
   }
 
