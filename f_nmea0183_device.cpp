@@ -201,7 +201,8 @@ bool f_nmea0183_device::rcv_file()
 bool f_nmea0183_device::rcv_com()
 {
   int nrcv;
-  while(nrcv = read_serial(m_hcom, &m_buf[m_buf_head], SIZE_NMEA_BUF - m_buf_head)){
+  while((nrcv = read_serial(m_hcom, &m_buf[m_buf_head], SIZE_NMEA_BUF - m_buf_head)) > 0){
+    
     m_buf_tail += nrcv;
     extract_nmea_from_buffer();
   }
