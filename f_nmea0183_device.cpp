@@ -333,8 +333,9 @@ bool f_nmea0183_device::proc(){
     if(m_ch_from_dev && m_ch_from_dev->pop(m_nmea) && is_filtered(m_nmea)){
       if(m_data_out){
 	const c_nmea_dat * dat = m_decoder.decode(m_nmea, get_time());
-	if(dat)
+	if(dat){	  
 	  m_data_out->push(dat->get_buffer_pointer(), dat->get_buffer_size());
+	}
       }
       
       if(m_chout && !m_chout->push(m_nmea)){
