@@ -330,29 +330,32 @@ bool f_nmea0183_device::proc(){
       return false;
     break;
   case CHAN:      
-    if(m_ch_from_dev && m_ch_from_dev->pop(m_nmea) && is_filtered(m_nmea)){
-      if(m_data_out){
-	const c_nmea_dat * dat = m_decoder.decode(m_nmea, get_time());
-	if(dat){	  
-	  m_data_out->push(dat->get_buffer_pointer(), dat->get_buffer_size());
+    while(m_ch_from_dev && m_ch_from_dev->pop(m_nmea)){
+      if(is_filtered(m_nmea)){
+	if(m_data_out){
+	  const c_nmea_dat * dat = m_decoder.decode(m_nmea, get_time());
+	  if(dat){	  
+	    m_data_out->push(dat->get_buffer_pointer(), dat->get_buffer_size());
+	  }
+	}
+	
+	if(m_chout && !m_chout->push(m_nmea)){
+	  cerr << "Buffer overflow in ch_nmea " << m_chout->get_name() << endl;
 	}
       }
       
-      if(m_chout && !m_chout->push(m_nmea)){
-	cerr << "Buffer overflow in ch_nmea " << m_chout->get_name() << endl;
+      if(m_blog){
+	if(m_flog.is_open())
+	  m_flog << get_time_str() << m_nmea << endl;
+	else{
+	  sprintf(m_fname_log, "%s/%s_%lld.nmea",
+		  f_base::get_data_path().c_str(), m_name, get_time());
+	  m_flog.open(m_fname_log);
+	}
+      }    
+      if(m_verb){
+	cout << m_name << " > " << m_nmea << endl;
       }
-    }    
-    if(m_blog){
-      if(m_flog.is_open())
-	m_flog << get_time_str() << m_nmea << endl;
-      else{
-	sprintf(m_fname_log, "%s/%s_%lld.nmea",
-		f_base::get_data_path().c_str(), m_name, get_time());
-	m_flog.open(m_fname_log);
-      }
-    }    
-    if(m_verb){
-      cout << m_name << " > " << m_nmea << endl;
     }
     break;
   }
